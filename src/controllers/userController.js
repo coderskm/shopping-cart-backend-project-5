@@ -8,7 +8,7 @@ const {uploadFile} = require('../aws/upload')
 const registerUser = async(req, res) =>{
     try {
         const userData = req.body;
-        //const file = req.files;
+        const file = req.files;
          let nameRegex = /^[a-zA-Z ]{2,20}$/;
          let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
          let phoneRegex = /^[6-9]\d{9}$/;
@@ -32,10 +32,10 @@ const registerUser = async(req, res) =>{
         if (uniqueEmail) {
             return res.status(400).send({status:false, message:"email already in use. Please try another"})
         }
-        // if (!isValidFiles(file)) {
-        //     return res.status(400).send({status:false, message:"user profile image required"})
-        // }
-        // const profileImage = await uploadFile(file[0]);
+        if (!isValidFiles(file)) {
+            return res.status(400).send({status:false, message:"user profile image required"})
+        }
+        const profileImage = await uploadFile(file[0]);
         if (!isValid(phone) && !phone.match(phoneRegex)) {
             return res.status(400).send({status: false, message: "Phone number of user not present or not legit. Shold contain only digits"})
         }
