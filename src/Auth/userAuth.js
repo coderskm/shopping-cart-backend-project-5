@@ -32,7 +32,7 @@ const authorisation = async function (req, res, next) {
       
         if (req.userDetails._id != req.params.userId) {
 
-        return res.status(403).send({ status: false, message: "you can't canhge other's data" })
+        return res.status(403).send({ status: false, message: "you can't change other's data" })
     }
      next()
         

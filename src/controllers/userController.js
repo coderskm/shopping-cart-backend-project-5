@@ -106,9 +106,9 @@ const registerUser = async(req, res) =>{
                 
             }
         
-        const profileImage = await uploadFile(file[0]);
+        // const profileImage = await uploadFile(file[0]);
         
-        const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:addObj}
+        const user ={fname:fname,lname:lname,email:email,phone:phone,profileImage:"profileImage", password:passwordHash, address:addObj}
         const userCreated = await userModel.create(user);
         res.status(201).send({status:true, message:"User Created Successfully", data: userCreated })
     } catch (err) {
