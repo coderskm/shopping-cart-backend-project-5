@@ -10,7 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(uploadImage.any());
 
 mongoose
-  .connect("mongodb+srv://sumitkm:<password>@cluster0.tuxaaky.mongodb.net/group62Database")
+  .connect("mongodb+srv://sumitkm:sumitkm@cluster0.tuxaaky.mongodb.net/group62Database")
   .then(() => console.log("MongoDb is connected 💯 ✅"))
   .catch((err) => console.log(err));
 
