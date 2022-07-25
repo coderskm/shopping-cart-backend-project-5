@@ -59,7 +59,7 @@ const registerUser = async(req, res) =>{
                 return res.status(400).send({status:false, message:"billing address should contain:- street city pincode"})
             }
         }
-        const user ={fname:fname,lname:lname,email:email,phone:phone, password:passwordHash, address:address}
+        const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:address}
         const userCreated = await userModel.create(user);
         res.status(201).send({status:true, message:"User Created Successfully", data: userCreated })
     } catch (err) {
