@@ -1,9 +1,14 @@
-const express = require('express');
-const auth= require('../Auth/userAuth');
+const express = require("express");
+const { authentication } = require("../Auth/userAuth");
 const router = express.Router();
-const controllers=require("../controllers/userController")
+const {registerUser,login, getProducts} = require('../controllers/userController')
 
-router.post("/register",  controllers.registerUser)
-router.post("//login",  auth.authentication,controllers.getProducts)
-router.get("/user/:userId/profile",  auth.authentication,auth.authorisation,controllers.getProducts)
-module.exports=router;
+router.post("/register", registerUser); 
+router.post("/login", login); 
+router.get("/user/:userId/profile", authentication, getProducts);
+
+router.all("*", function (req, res) {
+  return res.status(404).send({ status: false, message: "invalid URL" });
+});
+
+module.exports = router;

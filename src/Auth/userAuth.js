@@ -1,20 +1,25 @@
 const jwt =require("jsonwebtoken");
-const bookModel = require("../model/bookModel");
+const userModel = require("../models/userModel");
 const ObjectId = require('mongoose').Types.ObjectId
 const authentication = async function (req, res, next) {
 
     try {
     // check if token key is present in the header/cookies
-    let token = req.headers["x-api-key"];
+    let token = req.headers.authorization;
+    
     if(!token){
-    return res.status(400).send({ status: false, msg: "Token is Missing" });
-    }
-        
-    // Checking if the token is creted using the secret key provided and decode it.
-    let decodedToken = jwt.verify(token, "group62-radon");
+        return res.status(401).send({ status: false, msg: "Token is Missing" });
+        }
 
-    if (!decodedToken)
-    return res.status(401).send({ status: false, msg: "Authentication Missing. Login is required. Token is invalid" }); 
+    token=token.split(" ")[1]
+    // Checking if the token is creted using the secret key provided and decode it.
+    let decodedToken = jwt.verify(token, "productmanagementgroup62");
+    req.userDetails=decodedToken;
+
+
+
+    // if (!decodedToken)
+    // return res.status(401).send({ status: false, msg: "Authentication Missing. Login is required. Token is invalid" }); 
     next()
         
     }catch (err) {

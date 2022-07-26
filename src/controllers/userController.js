@@ -1,18 +1,72 @@
 // usercontroller
-const userModel = require('../models/userModel')
-const bcrypt = require('bcrypt')
+const userModel = require('../models/userModel');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
-const {isValidBody} = require('../validators/validator')
-
+const { isValidBody, isValid, isValidPassword, isValidFiles } = require('../validators/validator');
+const {uploadFile} = require('../aws/upload');
+const { default: mongoose } = require('mongoose');
 
 const registerUser = async(req, res) =>{
     try {
         const userData = req.body;
+        const file = req.files;
+         let nameRegex = /^[a-zA-Z ]{2,20}$/;
+         let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+         let phoneRegex = /^[6-9]\d{9}$/;
         if (!isValidBody(userData)) {
-            return res.status(400).send({status:false, message:"User Data not entered." })
+            return res.status(400).send({ status: false, message: "User Data not entered." });
         }
-    } catch (err) {
+        // profileImage work later
+        const { fname, lname, email, phone, password, address } = userData;
         
+        if (!isValid(fname) && !fname.match(nameRegex)) {
+           return res.status(400).send({ status: false, message: "First Name of user not present or not legit. Should contain only alphabets" });
+
+        }
+        if (!isValid(lname)&&!lname.match(nameRegex)) {
+            return res.status(400).send({ status: false, message: "Last Name of user not present or not legit. Should contain only alphabets" });
+        }
+        if (!isValid(email)&&!email.match(emailRegex)) {
+            return res.status(400).send({status: false, message: "Email of user not present"})
+        }
+        let uniqueEmail = await userModel.findOne({ email: email });
+        if (uniqueEmail) {
+            return res.status(400).send({status:false, message:"email already in use. Please try another"})
+        }
+       if (!isValidFiles(file)) {
+           return res.status(400).send({status:false, message:"user profile image required"})
+       }
+        const profileImage = await uploadFile(file[0]);
+       
+        if (!isValid(phone) && !phone.match(phoneRegex)) {
+            return res.status(400).send({status: false, message: "Phone number of user not present or not legit. Shold contain only digits"})
+        }
+        let uniquePhone = await userModel.findOne({ phone: phone });
+        if (uniquePhone) {
+            return res.status(400).send({status:false, message:"Phone number already in use. Please try another"})
+        }
+        if (!isValid(password) && !isValidPassword(password)) {
+            return res.status(400).send({status: false, message: "password of user not present or not legit. Should be between 8 to 15 characters"})
+        }
+        let saltrounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltrounds)
+
+        if (!isValid(address) && Object.keys(address).length!=2) {
+            return res.status(400).send({ status: false, message: "Address of user not present" });
+        }
+        if (address) {
+        if (Object.keys(address.shipping).length != 3) {
+        return res.status(400).send({status:false, message:"shipping address should contain:- street city pincode"})
+            }
+        if (Object.keys(address.billing).length != 3) {
+        return res.status(400).send({status:false, message:"billing address should contain:- street city pincode"})
+            }
+        }
+        const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:address}
+        const userCreated = await userModel.create(user);
+        res.status(201).send({status:true, message:"User Created Successfully", data: userCreated })
+    } catch (err) {
+        res.status(500).send({ status: false, message: err.message });
     }
 }
 
@@ -25,9 +79,9 @@ const login = async(req, res) =>{
 
     if(!userData.password) return res.status(400).send({status:false, message:"Please Enter Password" })
 
-    if(!isValidEmail(userData.email)) return res.status(400).send({status:false, message:"Please enter valid email" })
+        if(!/^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(userData.email)) return res.status(400).send({status:false, message:"Please enter valid email" })
 
-    const userDetail = await userModel.fineOne({email:userData.email});
+        const userDetail = await userModel.findOne({email:userData.email});
 
     if(!userDetail) return res.status(404).send({status:false, message:"User not Register" });
 
@@ -46,25 +100,15 @@ const login = async(req, res) =>{
 const getProducts= async function(req,res){
     try{
     userId=req.params.userId;
-    if(!userId){res.staus(400).send({status:false,message:"please enter user id in params"})}
+    if(userId!==req.userDetails._id){res.status(403).send({status:false,message:"unauthorised user"})}
+    if(!userId){res.status(400).send({status:false,message:"please enter user id in params"})}
+    if(!mongoose.isValidObjectId(userId)){res.status(400).send({status:false,message:"please enter a valid user id"})}
     const findUser=await userModel.findById(userId)
     if(!findUser){return res.status(404).send({status:false,message:"no such user found in the database"})}
-    let data={}
-    let userAddress=findUser.address;
-    let userDetails=findUser.fname;
-                    findUser.lname;
-                    findUser.email;
-                    findUser.email;
-                    findUser.phone;
-                    findUser.password;
-    data.userAddress=userAddress;
-    data.userDetails=userDetails;
 
-     return res.status(200).send({satus:true,data:data})
+     return res.status(200).send({status:true,data:findUser})
      }catch(err){return res.status(500).send({status:false,message:err.message})}
 }
 
-
-
-
-module.exports = {registerUser,login,getProducts}
+module.exports = {registerUser,login}
+module.exports.getProducts=getProducts;
