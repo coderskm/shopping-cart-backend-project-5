@@ -16,7 +16,7 @@ const authentication = async function (req, res, next) {
     let decodedToken = jwt.verify(token, "productmanagementgroup62");
     req.userDetails=decodedToken;
 
-
+ 
 
     // if (!decodedToken)
     // return res.status(401).send({ status: false, msg: "Authentication Missing. Login is required. Token is invalid" }); 
@@ -25,7 +25,7 @@ const authentication = async function (req, res, next) {
     }catch (err) {
         res.status(500).send({ msg: "Serverside Errors. Please try again later", error: err.message })
     }
-
+ 
     }
 
 const authorisation = async function (req, res, next) {

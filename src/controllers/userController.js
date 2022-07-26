@@ -10,10 +10,10 @@ const registerUser = async(req, res) =>{
     try {
         const userData = req.body;
         const file = req.files;
-         let nameRegex = /^[a-zA-Z ]{2,20}$/;
-         let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+        let nameRegex = /^[a-zA-Z ]{2,20}$/;
+        let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
         let phoneRegex = /^[6-9]\d{9}$/;
-        let streetRegex = /^([a-zA-Z0-9 ]{2,20})*$/;
+        let streetRegex = /^([a-zA-Z0-9 ]{5,20})*$/;
         let cityRegex = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
         let pinRegex = /^\d{6}$/;
         if (!isValidBody(userData)) {
@@ -48,12 +48,17 @@ const registerUser = async(req, res) =>{
         if (uniquePhone) {
             return res.status(400).send({status:false, message:"Phone number already in use. Please try another"})
         }
-        if (!isValid(password) && !isValidPassword(password)) {
-            return res.status(400).send({status: false, message: "password of user not present or not legit. Should be between 8 to 15 characters"})
+        if (!isValid(password)) {
+            return res.status(400).send({status: false, message: "password of user not present."})
+        }
+        if(!isValidPassword(password)) {
+            return res.status(400).send({status: false, message: "password of user not legit. Should be between 8 to 15 characters"})
         }
         let saltrounds = 10;
         const passwordHash = await bcrypt.hash(password, saltrounds)
-        
+        if (!isValid(address)) {
+            return res.status(400).send({status:false, message:"address of user not present."})
+        }
         let str = JSON.parse(JSON.stringify(address))
         console.log(str);
         let addObj = JSON.parse(str)
@@ -65,10 +70,10 @@ const registerUser = async(req, res) =>{
                     return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
                 }
                 if (!(addObj.shipping.city).match(cityRegex)) {
-                    return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
+                    return res.status(400).send({status:false, message:"shipping's city name should contain only alphabets"})
                 }
                 if (!(addObj.shipping.pincode).match(pinRegex)) {
-                    return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
+                    return res.status(400).send({status:false, message:"shipping's pincode should contain 6 digits only"})
                 }
             }
             if (typeof addObj.billing == 'object' && Object.keys(addObj.billing).length === 3) {
@@ -76,10 +81,10 @@ const registerUser = async(req, res) =>{
                     return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
                 }
                 if (!(addObj.billing.city).match(cityRegex)) {
-                    return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
+                    return res.status(400).send({status:false, message:"billing's city name should contain only alphabets"})
                 }
                 if (!(addObj.billing.pincode).match(pinRegex)) {
-                    return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
+                    return res.status(400).send({status:false, message:"billing's pincode should contain 6 digits only"})
                 }
             }}
         

@@ -10,7 +10,7 @@ const isValid =  (value)=> {
 };
 
 const isValidPassword = (password) => {
-    if (password.length >= 8 && password.length <= 15)
+    if (password.length > 7 && password.length < 16)
         return true;
 }
 
