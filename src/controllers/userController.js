@@ -12,7 +12,10 @@ const registerUser = async(req, res) =>{
         const file = req.files;
          let nameRegex = /^[a-zA-Z ]{2,20}$/;
          let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
-         let phoneRegex = /^[6-9]\d{9}$/;
+        let phoneRegex = /^[6-9]\d{9}$/;
+        let streetRegex = /^([a-zA-Z0-9 ]{2,20})*$/;
+        let cityRegex = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
+        let pinRegex = /^\d{6}$/;
         if (!isValidBody(userData)) {
             return res.status(400).send({ status: false, message: "User Data not entered." });
         }
@@ -50,19 +53,38 @@ const registerUser = async(req, res) =>{
         }
         let saltrounds = 10;
         const passwordHash = await bcrypt.hash(password, saltrounds)
+        
+        let str = JSON.parse(JSON.stringify(address))
+        console.log(str);
+        let addObj = JSON.parse(str)
+        console.log(addObj)
 
-        if (!isValid(address) && Object.keys(address).length!=2) {
-            return res.status(400).send({ status: false, message: "Address of user not present" });
-        }
-        if (address) {
-        if (Object.keys(address.shipping).length != 3) {
-        return res.status(400).send({status:false, message:"shipping address should contain:- street city pincode"})
+        if (typeof addObj == 'object' && Object.keys(addObj).length===2) {
+            if (typeof addObj.shipping == 'object' && Object.keys(addObj.shipping).length === 3) {
+                if (!(addObj.shipping.street).match(streetRegex)) {
+                    return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
+                }
+                if (!(addObj.shipping.city).match(cityRegex)) {
+                    return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
+                }
+                if (!(addObj.shipping.pincode).match(pinRegex)) {
+                    return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
+                }
             }
-        if (Object.keys(address.billing).length != 3) {
-        return res.status(400).send({status:false, message:"billing address should contain:- street city pincode"})
-            }
-        }
-        const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:address}
+            if (typeof addObj.billing == 'object' && Object.keys(addObj.billing).length === 3) {
+                if (!(addObj.billing.street).match(streetRegex)) {
+                    return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
+                }
+                if (!(addObj.billing.city).match(cityRegex)) {
+                    return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
+                }
+                if (!(addObj.billing.pincode).match(pinRegex)) {
+                    return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
+                }
+            }}
+        
+        
+        const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:addObj}
         const userCreated = await userModel.create(user);
         res.status(201).send({status:true, message:"User Created Successfully", data: userCreated })
     } catch (err) {
@@ -94,7 +116,7 @@ const login = async(req, res) =>{
     return res.status(200).send({status:true,message:"login succesfull",data:{userId:userDetail._id,token}})
 
     } catch (err) { return res.status(500).send({status:false,message:err.message})}
-}
+} 
 
 
 const getProducts= async function(req,res){
