@@ -50,12 +50,10 @@ const registerUser = async(req, res) =>{
         if(!isValidPassword(password)) {
             return res.status(400).send({status: false, message: "password of user not legit. Should be between 8 to 15 characters"})
         }
-        let saltrounds = 10;
-        const passwordHash = await bcrypt.hash(password, saltrounds)
+        const passwordHash = await bcrypt.hash(password, 10) // bcrypt.hash(password, saltrounds)
         if (!isValid(address)) {
             return res.status(400).send({status:false, message:"address of user not present."})
         }
-        const profileImage = await uploadFile(file[0]);
         if (!isValidFiles(file)) {
            return res.status(400).send({status:false, message:"user profile image required"})
        } 
@@ -109,12 +107,19 @@ const registerUser = async(req, res) =>{
                 
             }
         
+        const profileImage = await uploadFile(file[0]);
         
         const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:addObj}
         const userCreated = await userModel.create(user);
         res.status(201).send({status:true, message:"User Created Successfully", data: userCreated })
     } catch (err) {
-        res.status(500).send({ status: false, message: err.message });
+        if (err.message == "Unexpected number in JSON at position 65") {
+            return res.status(400).send({status:false, message:"pin code cannot start with 0"})
+        }
+        if (err.message == "Unexpected number in JSON at position 130") {
+            return res.status(400).send({status:false, message:"pin code cannot start with 0"})
+        }
+          res.status(500).send({ status: false, message: err.message });
     }
 }
 
