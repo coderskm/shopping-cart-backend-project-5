@@ -15,7 +15,7 @@ const registerUser = async(req, res) =>{
         let phoneRegex = /^[6-9]\d{9}$/;
         let streetRegex = /^([a-zA-Z0-9 ]{5,20})*$/;
         let cityRegex = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
-        let pinRegex = /^\d{6}$/;
+        let pinRegex = /^[1-9]\d{5}$/;
         if (!isValidBody(userData)) {
             return res.status(400).send({ status: false, message: "User Data not entered." });
         }
@@ -36,11 +36,7 @@ const registerUser = async(req, res) =>{
         if (uniqueEmail) {
             return res.status(400).send({status:false, message:"email already in use. Please try another"})
         }
-       if (!isValidFiles(file)) {
-           return res.status(400).send({status:false, message:"user profile image required"})
-       }
-        const profileImage = await uploadFile(file[0]);
-       
+             
         if (!isValid(phone) && !phone.match(phoneRegex)) {
             return res.status(400).send({status: false, message: "Phone number of user not present or not legit. Shold contain only digits"})
         }
@@ -59,6 +55,11 @@ const registerUser = async(req, res) =>{
         if (!isValid(address)) {
             return res.status(400).send({status:false, message:"address of user not present."})
         }
+        const profileImage = await uploadFile(file[0]);
+        if (!isValidFiles(file)) {
+           return res.status(400).send({status:false, message:"user profile image required"})
+       } 
+
         let str = JSON.parse(JSON.stringify(address))
         console.log(str);
         let addObj = JSON.parse(str)
@@ -66,27 +67,47 @@ const registerUser = async(req, res) =>{
 
         if (typeof addObj == 'object' && Object.keys(addObj).length===2) {
             if (typeof addObj.shipping == 'object' && Object.keys(addObj.shipping).length === 3) {
-                if (!(addObj.shipping.street).match(streetRegex)) {
+                if (!isValid(addObj.shipping.street)) {
+                    return res.status(400).send({status:false, message:"shipping's street name is required"})
+                }
+                if(!(streetRegex).test(addObj.shipping.street)) {
                     return res.status(400).send({status:false, message:"shipping's street name should contain alphanumeric values"})
                 }
-                if (!(addObj.shipping.city).match(cityRegex)) {
+                if (!isValid(addObj.shipping.city)) {
+                    return res.status(400).send({status:false, message:"shipping's city name required."})
+                }
+                if(!(cityRegex).test(addObj.shipping.city)) {
                     return res.status(400).send({status:false, message:"shipping's city name should contain only alphabets"})
                 }
-                if (!(addObj.shipping.pincode).match(pinRegex)) {
-                    return res.status(400).send({status:false, message:"shipping's pincode should contain 6 digits only"})
+                if (typeof addObj.shipping.pincode!=='number') {
+                    return res.status(400).send({status:false, message:"shipping's pincode should be a number."})
+                }
+                if(!(pinRegex).test(addObj.shipping.pincode)) {
+                    return res.status(400).send({status:false, message:"shipping's pincode should contain 6 digits."})
                 }
             }
             if (typeof addObj.billing == 'object' && Object.keys(addObj.billing).length === 3) {
-                if (!(addObj.billing.street).match(streetRegex)) {
+                if (!isValid(addObj.billing.street)) {
+                    return res.status(400).send({status:false, message:"billing's street name is required"})
+                }
+                if(!(streetRegex).test(addObj.billing.street)) {
                     return res.status(400).send({status:false, message:"billing's street name should contain alphanumeric values"})
                 }
-                if (!(addObj.billing.city).match(cityRegex)) {
+                if (!isValid(addObj.billing.city)) {
+                    return res.status(400).send({status:false, message:"billing's city name is required"})
+                }
+                if(!(cityRegex).test(addObj.billing.city)) {
                     return res.status(400).send({status:false, message:"billing's city name should contain only alphabets"})
                 }
-                if (!(addObj.billing.pincode).match(pinRegex)) {
-                    return res.status(400).send({status:false, message:"billing's pincode should contain 6 digits only"})
+                if (typeof addObj.billing.pincode!=='number') {
+                    return res.status(400).send({status:false, message:"billing's pincode should be a number."})
                 }
-            }}
+                if (!(pinRegex).test(addObj.billing.pincode)) {
+                        return res.status(400).send({ status: false, message: "billing's pincode should contain 6 digits." })
+                    }
+                }
+                
+            }
         
         
         const user ={fname:fname,lname:lname,email:email,phone:phone, profileImage:profileImage, password:passwordHash, address:addObj}
@@ -124,7 +145,7 @@ const login = async(req, res) =>{
 } 
 
 
-const getProducts= async function(req,res){
+const getUserById= async function(req,res){
     try{
     userId=req.params.userId;
     if(userId!==req.userDetails._id){res.status(403).send({status:false,message:"unauthorised user"})}
@@ -137,5 +158,6 @@ const getProducts= async function(req,res){
      }catch(err){return res.status(500).send({status:false,message:err.message})}
 }
 
-module.exports = {registerUser,login}
-module.exports.getProducts=getProducts;
+
+
+module.exports = {registerUser,login, getUserById}
