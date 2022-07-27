@@ -6,20 +6,21 @@ const { isValidBody, isValid, isValidPassword, isValidFiles } = require('../vali
 const {uploadFile} = require('../aws/upload');
 const { default: mongoose } = require('mongoose');
 
+let nameRegex = /^[a-zA-Z ]{2,20}$/;
+let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+let phoneRegex = /^[6-9]\d{9}$/;
+let streetRegex = /^([a-zA-Z0-9 ]{5,20})*$/;
+let cityRegex = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
+let pinRegex = /^[1-9]\d{5}$/;
+
 const registerUser = async(req, res) =>{
     try {
         const userData = req.body;
         const file = req.files;
-        let nameRegex = /^[a-zA-Z ]{2,20}$/;
-        let emailRegex = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
-        let phoneRegex = /^[6-9]\d{9}$/;
-        let streetRegex = /^([a-zA-Z0-9 ]{5,20})*$/;
-        let cityRegex = /^[a-zA-z]+([\s][a-zA-Z]+)*$/;
-        let pinRegex = /^[1-9]\d{5}$/;
+      
         if (!isValidBody(userData)) {
             return res.status(400).send({ status: false, message: "User Data not entered." });
         }
-        // profileImage work later
         const { fname, lname, email, phone, password, address } = userData;
         
         if (!isValid(fname) && !fname.match(nameRegex)) {
@@ -59,9 +60,7 @@ const registerUser = async(req, res) =>{
        } 
 
         let str = JSON.parse(JSON.stringify(address))
-        console.log(str);
-        let addObj = JSON.parse(str)
-        console.log(addObj)
+        let addObj = JSON.parse(str);
 
         if (typeof addObj == 'object' && Object.keys(addObj).length===2) {
             if (typeof addObj.shipping == 'object' && Object.keys(addObj.shipping).length === 3) {
@@ -119,7 +118,7 @@ const registerUser = async(req, res) =>{
         if (err.message == "Unexpected number in JSON at position 130") {
             return res.status(400).send({status:false, message:"pin code cannot start with 0"})
         }
-          res.status(500).send({ status: false, message: err.message });
+        return  res.status(500).send({ status: false, message: err.message });
     }
 }
 
@@ -132,9 +131,9 @@ const login = async(req, res) =>{
 
     if(!userData.password) return res.status(400).send({status:false, message:"Please Enter Password" })
 
-        if(!/^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(userData.email)) return res.status(400).send({status:false, message:"Please enter valid email" })
+    if(!/^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(userData.email)) return res.status(400).send({status:false, message:"Please enter valid email" })
 
-        const userDetail = await userModel.findOne({email:userData.email});
+    const userDetail = await userModel.findOne({email:userData.email});
 
     if(!userDetail) return res.status(404).send({status:false, message:"User not Register" });
 
@@ -149,20 +148,115 @@ const login = async(req, res) =>{
     } catch (err) { return res.status(500).send({status:false,message:err.message})}
 } 
 
-
-const getUserById= async function(req,res){
+const getProfile= async function(req,res){
     try{
-    userId=req.params.userId;
-    if(userId!==req.userDetails._id){res.status(403).send({status:false,message:"unauthorised user"})}
-    if(!userId){res.status(400).send({status:false,message:"please enter user id in params"})}
-    if(!mongoose.isValidObjectId(userId)){res.status(400).send({status:false,message:"please enter a valid user id"})}
-    const findUser=await userModel.findById(userId)
-    if(!findUser){return res.status(404).send({status:false,message:"no such user found in the database"})}
+        let userId = req.params.userId;
 
-     return res.status(200).send({status:true,data:findUser})
-     }catch(err){return res.status(500).send({status:false,message:err.message})}
+        if(userId !== req.userDetails._id){return res.status(403).send({status:false,message:"unauthorised user"})}
+
+        if(!userId){return res.status(400).send({status:false,message:"please enter user id in params"})}
+
+        if(!mongoose.isValidObjectId(userId)){res.status(400).send({status:false,message:"please enter a valid user id"})}
+
+        const findUser=await userModel.findById(userId);
+
+        if(!findUser){return res.status(404).send({status:false,message:"no such user found in the database"})}
+
+        return res.status(200).send({status:true,data:findUser});
+
+    }catch(err){return res.status(500).send({status:false,message:err.message})}
+}
+
+let updateUser = async function (req, res){
+    try{
+        let userId = req.params.userId
+        let userData = req.body
+        const file = req.files;
+
+        if(!mongoose.isValidObjectId(userId)) {
+            return res.status(400).send({status:false, message: " Invalid userId format"})
+        }
+
+        let checkUser = await userModel.findById(userId);
+
+        if(!checkUser) return res.status(404).send({status:false, message: "userId not found"})
+
+        if(!isValidBody(userData)) {
+            return res.status(400).send({status:false, message: "Please Provide data for updation"})
+        }
+        
+        if(userData.fname){
+            if(!nameRegex.test(userData.fname)) return res.status(400).send({status:false, message: "Opps! fname is not a valid name"})
+            checkUser.fname = userData.fname    
+        }
+
+        if(userData.lname){
+            if(!nameRegex.test(userData.lname)) return res.status(400).send({status:false, message:"Opps! lname is not a valid name"})
+            checkUser.lname = userData.lname
+        }
+
+        if(userData.email){
+            if(!emailRegex.test(userData.email)) return res.status(400).send({status:false, message:"Opps! email is not a valid name"}) 
+            let uniqueEmail = await userModel.findOne({email:userData.email});
+            if(uniqueEmail) return res.status(400).send({status:false, message:"Opps! email is already  present in our database"}) 
+            checkUser.email = userData.email
+        }
+
+        if(userData.phone) {
+            if(!phoneRegex.test(userData.phone))
+            return res.status(400).send({status:false, message:"Opps! phone is not valid"})
+            let uniquePhone = await userModel.findOne({phone:userData.phone})
+            if(uniquePhone) return res.status(400).send({status:false, message:"phone already exist"})
+            checkUser.phone = userData.phone
+        
+        }
+        if(userData.profileImage) {
+            if (!isValidFiles(file)) return res.status(400).send({status:false, message:"user profile image required"})
+            let profileImage = await uploadFile(file[0]);
+            checkUser.profileImage = profileImage;
+        
+        }
+        if(userData.password) {
+            if (!isValid(userData.password)) return res.status(400).send({status: false, message: "password of user not present."})
+            checkUser.password = await bcrypt.hash(userData.password , 10) 
+        }
+
+        userData.address = JSON.parse(userData.address);
+
+        if(userData.address.shipping) {
+            if(userData.address.shipping.street){
+                if(!streetRegex.test(userData.address.shipping.street)) return res.status(400).send({status:false, message:"shipping's street name is required and string formet"})
+                checkUser.address.shipping.street = userData.address.shipping.street
+            }
+            if(userData.address.shipping.city){
+                if(!cityRegex.test(userData.address.shipping.city)) return res.status(400).send({status:false, message:"shipping's city name is required "})
+                checkUser.address.shipping.city = userData.address.shipping.city
+            }
+            if(userData.address.shipping.pincode){
+                if(!pinRegex.test(userData.address.shipping.pincode)) return res.status(400).send({status:false, message:"shipping's pincode is required and only 6 digit in number and makesure not start with 0 "})
+                checkUser.address.shipping.pincode = userData.address.shipping.pincode
+            }
+        }
+        if(userData.address.billing) {
+            if(userData.address.billing.street){
+                if(!streetRegex.test(userData.address.billing.street)) return res.status(400).send({status:false, message:"billing street name is required and string formet"})
+                checkUser.address.billing.street = userData.address.billing.street
+            }
+            if(userData.address.billing.city){
+                if(!cityRegex.test(userData.address.billing.city)) return res.status(400).send({status:false, message:"billing city name is required"})
+                checkUser.address.billing.city = userData.address.billing.city
+            }
+            if(userData.address.billing.pincode){
+                if(!pinRegex.test(userData.address.billing.pincode)) return res.status(400).send({status:false, message:"billing pincode  is required and only 6 digit in number and makesure not start with 0"})
+                checkUser.address.billing.pincode = userData.address.billing.pincode
+            }
+        
+        }
+        const data = await checkUser.save();
+        return res.status(200).send({status:true, message: "User profile updated", data})
+    }catch(err) {return res.status(500).send({status:false, message: err.message})}
+    
 }
 
 
-
-module.exports = {registerUser,login, getUserById}
+module.exports = {registerUser,login, getProfile,updateUser}
