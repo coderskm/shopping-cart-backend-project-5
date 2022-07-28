@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const{newProduct}=require("../controllers/productController")
 
 const { authentication ,authorisation} = require("../Auth/userAuth");
 const {registerUser,login, getProfile,updateUser} = require('../controllers/userController')
@@ -12,6 +13,7 @@ router.get("/user/:userId/profile", authentication, getProfile);
 router.put("/user/:userId/profile", authentication,authorisation, updateUser);
 
 /* PRODUCT API's */
+router.post("/products", newProduct);
 
 /*BAD URL */
 router.all("*", function (req, res) {

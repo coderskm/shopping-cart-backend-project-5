@@ -11,13 +11,14 @@ const productSchema = new mongoose.Schema(
             required: true
         },
         price: {
-            type: Number, required: true,
-            type: Number
+            type: Number,
+             required: true,
+           
         },
         currencyId: {
              type: String,
               required: true, 
-              default: INR 
+              default: "INR "
             },
         currencyFormat: {
              type: String, 
@@ -25,7 +26,7 @@ const productSchema = new mongoose.Schema(
              default: "₹" 
             },
         isFreeShipping: { 
-            boolean, 
+           type: Boolean, 
             default: false 
         },
         productImage: {
