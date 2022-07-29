@@ -65,13 +65,13 @@ const newProduct= async function(req,res){
 
 const getAllProduct = async (req,res)=>{
 try{
-    const {size,name,price,priceGreaterThan,priceLessThan,priceSort,...rest} = req.query
+    const {size,name,priceGreaterThan,priceLessThan,priceSort,...rest} = req.query
    
     if(Object.keys(rest).length !== 0)  return res.status(400).send({status:false,message:`You can't filter for this key`})
 
     const priceSorter = (data,priceSort)=> {
-        if(priceSort == -1) data.sort((a,b)=> a.price - b.price);
-        if(priceSort == 1)  data.sort((a,b)=> b.price - a.price);
+        if(priceSort == -1) data.sort((a,b)=> a.price - b.price); // dec
+        if(priceSort == 1)  data.sort((a,b)=> b.price - a.price); //
         return data;
     }
 
@@ -85,35 +85,22 @@ try{
 
         return res.status(200).send({status:true,message:"all Produts",data})
     }else{
-            let filter ={};
-            if(price) filter.price = price;
-            if(name)  filter.title = name;
-            filter.isDeleted = false
+        let filter ={};
+        if(name)  filter.title = {"$regex":name,"$options":'i'}; 
+        if(size) filter.availableSizes = {"$in":size};
+        if(priceGreaterThan) filter.price = {"$gte":priceGreaterThan};
+        if(priceLessThan) filter.price = {"$lte":priceLessThan};
+        if(priceLessThan && priceGreaterThan) filter.price = {"$gte":priceGreaterThan,"$lte":priceLessThan};
+        filter.isDeleted = false;
 
-            if(Object.keys(filter).length == 2){
+        let data = await productModel.find(filter);
 
-                let data = await productModel.find(filter);
-            
-                if(data.length == 0) return res.status(404).send({status:false,message:" Produts not found",})
+        if(data.length == 0) return res.status(404).send({status:false,message:" Produts not found",});
 
-                return res.status(200).send({status:true,message:"all Produts",data})
-            }else{
-                ["price","title"].forEach(ele => delete filter[ele]);
+        if(priceSort) data = priceSorter(data , priceSort);
 
-                if(size) filter.availableSizes = {"$in":size}
-                if(priceGreaterThan) filter.price = {"$gte":priceGreaterThan}
-                if(priceLessThan) filter.price = {"$lte":priceLessThan}
-                if(priceLessThan && priceGreaterThan) filter.price = {"$gte":priceGreaterThan,"$lte":priceLessThan}
+        return res.status(200).send({status:true,message:"all Produts",data});
 
-                let data = await productModel.find(filter);
-
-                if(data.length == 0) return res.status(404).send({status:false,message:" Produts not found",})
-
-                if(priceSort) data = priceSorter(data , priceSort);
-
-                return res.status(200).send({status:true,message:"all Produts",data})
-
-            }
         }
 
 }catch(err){return res.status(500).send({ status: false, message: err.message }); }
@@ -148,11 +135,9 @@ const deleteProduct = async function(req,res){
             {_id:productId},
             {isDeleted:true, deletedAt:new Date()},   
         )
-        res.status(200).send({status:false, message:"Congrats ! Product has been deleted successfully"})
+        res.status(200).send({status:true, message:"Congrats ! Product has been deleted successfully"})
 
-    }catch(err){
-        return res.status(500).send({status:false, message:err.message})
-    }
+    }catch(err){return res.status(500).send({status:false, message:err.message})}
 }
 
 module.exports={ newProduct, getAllProduct, getSingleProduct,deleteProduct};
