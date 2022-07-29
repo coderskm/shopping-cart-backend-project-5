@@ -4,7 +4,7 @@ const { isValidBody, isValid,  isValidFiles } = require('../validators/validator
 const {uploadFile} = require('../aws/upload');
 
 let nameRegex = /^[a-zA-Z ]{2,20}$/;
-
+let shippingRegex = /^(true|false)$/;
 const newProduct= async function(req,res){
     try{
     let data=req.body;
@@ -37,7 +37,7 @@ const newProduct= async function(req,res){
     if (!isValid(style)) {return res.status(400).send({ status: false, message: "style not valid" });}
     if(!typeof(style)==String){return res.status(400).send({ status: false, message: "style should only be string Type" });}
         
-    if(!availableSizes){return res.status(400).send({ status: false, message: "available Sizes is  required" });}
+    if(!availableSizes){return res.status(400).send({ status: false, message: "available Sizes is required" });}
     if(availableSizes){
     availableSizes = availableSizes.split(",");
     let enumValue =  ["S", "XS", "M", "X", "L", "XXL", "XL"]
@@ -134,6 +134,111 @@ const getSingleProduct = async (req,res)=>{
     }catch(err){return res.status(500).send({ status: false, message: err.message });}
 }
 
+
+const updateProduct = async (req, res) => {
+    try {
+        let productId = req.params.productId;
+        let data = req.body;
+        let files = req.files;
+        if (!mongoose.isValidObjectId(productId)) {
+            return res.status(400).send({ status: false, message: "productId not valid" });
+        }
+        let checkId = await productModel.findOne({$and:[{_id:productId},{isDeleted:false}]});
+        if (!checkId) {
+            return res.status(404).send({status:false, message:"productId does not exist or product is deleted."})
+        }
+        if (!isValidBody(data)) {
+            return res.status(400).send({ status: false, message: "No data found to update." });
+        }
+        if (data.title) {
+             if (!isValid(data.title)) {
+            return res.status(400).send({ status: false, message: "title is required" });}
+         if(!nameRegex.test(data.title)){
+            return res.status(400).send({ status: false, message: "title should contain only alphabets" });
+        }
+        }
+        const checkTitle = await productModel.findOne({ title: data.title })
+        if (checkTitle) {
+            return res.status(400).send({status:false, message:"title already exists. Please try another."})
+        }
+        if (data.description) {
+            if (!isValid(data.description)) {
+            return res.status(400).send({ status: false, message: "description is required" });}
+        }
+        if (data.price) {
+            if (!isValid(data.price)) {
+                return res.status(400).send({status:false, message:"price is required."})
+            }
+            let priceNum = parseInt(data.price);
+            if (typeof priceNum !== 'number' && priceNum>0) {
+                return res.status(400).send({status:false, message:"price should be a number"})
+            }
+        }
+        if (data.currencyId) {
+            if (!isValid(data.currencyId)) {
+                return res.status(400).send({status:false, message:"provide currencyId."})
+            }
+            if (data.currencyId !== "INR") {
+                return res.status(400).send({status:false, message:"provide currencyId should only be INR."})
+            }
+        }
+        if (data.currencyFormat) {
+            if (!isValid(data.currencyFormat)) {
+                return res.status(400).send({status:false, message:"currency format is required"})
+            }
+            if (data.currencyFormat !== "₹") {
+                return res.status(400).send({status:false, message:"currency format should be ₹ only"})
+            }
+            
+        }
+        if (data.isFreeShipping) {
+            if (!isValid(data.isFreeShipping)) {
+                return res.status(400).send({status:false, message:"isFreeShipping value required."})
+            }
+            if (!shippingRegex.test(data.isFreeShipping)) {
+                return res.status(400).send({status:false, message:"it should have only only true and false" })
+            }
+            
+        }
+        if (data.style) {
+            if (!isValid(data.style)) {
+                return res.status(400).send({status:false, message:"style is required"})
+            }
+            if (typeof data.style !== "string") {
+                return res.status(400).send({status:false, message:"style should be string"})
+            }
+        }
+        if (data.availableSizes) {
+            data.availableSizes = data.availableSizes.split(",")
+            let arr = ["S", "XS", "M", "X", "L", "XXL", "XL"];
+            let checkSize = data.availableSizes.every(ele => arr.indexOf(ele) != -1)
+            if (!checkSize) {
+                return res.status(400).send({status:false, message:"size should be from 'S', 'XS', 'M', 'X', 'L', 'XXL' and 'XL' only."})
+            }
+        }
+        // console.log(sizeArr)
+        // console.log(data.availableSizes)
+
+        if (data.installments) {
+            if (!isValid(data.installments)) {
+                return res.status(400).send({status:false, message:"installments required"})
+            }
+            let numCheck = parseInt(data.installments)
+            if (typeof numCheck !== "number" && numCheck>=0) {
+                return res.status(400).send({status:false, message:"installment should be a number."})
+            }
+        }
+          if (files.length) {
+            const productPicture = await uploadFile(files[0]);
+            data.productImage = productPicture;
+          }
+        const updateData = await productModel.findOneAndUpdate({ _id: checkId._id }, data, { new: true })
+        return res.status(200).send({status:true, message:"updated successfully", data:updateData})
+    } catch (err) {
+        res.status(500).send({status:false, message:err.message})
+    }
+}
+
 const deleteProduct = async function(req,res){
     try{
         let productId = req.params.productId
@@ -155,7 +260,9 @@ const deleteProduct = async function(req,res){
     }
 }
 
-module.exports={ newProduct, getAllProduct, getSingleProduct,deleteProduct};
 
 
+
+
+module.exports = { newProduct, getAllProduct, getSingleProduct, updateProduct,deleteProduct };
 
