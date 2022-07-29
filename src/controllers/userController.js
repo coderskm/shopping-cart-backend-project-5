@@ -60,7 +60,7 @@ const registerUser = async(req, res) =>{
        } 
 
         let str = JSON.parse(JSON.stringify(address))
-        let addObj = JSON.parse(str);
+        let addObj = JSON.parse(str)
 
         if (typeof addObj == 'object' && Object.keys(addObj).length===2) {
             if (typeof addObj.shipping == 'object' && Object.keys(addObj.shipping).length === 3) {
@@ -186,7 +186,8 @@ let updateUser = async function (req, res){
         }
         
         if(userData.fname){
-            if(!nameRegex.test(userData.fname)) return res.status(400).send({status:false, message: "Opps! fname is not a valid name"})
+            if (!nameRegex.test(userData.fname)) return res.status(400).send({ status: false, message: "Opps! fname is not a valid name" })
+            
             checkUser.fname = userData.fname    
         }
 
@@ -221,11 +222,11 @@ let updateUser = async function (req, res){
             checkUser.password = await bcrypt.hash(userData.password , 10) 
         }
 
-        userData.address = JSON.parse(userData.address);
+        userData.address = JSON.parse(userData.address); 
 
         if(userData.address.shipping) {
             if(userData.address.shipping.street){
-                if(!streetRegex.test(userData.address.shipping.street)) return res.status(400).send({status:false, message:"shipping's street name is required and string formet"})
+                if(!streetRegex.test(userData.address.shipping.street)) return res.status(400).send({status:false, message:"shipping's street name is required and addObjing formet"})
                 checkUser.address.shipping.street = userData.address.shipping.street
             }
             if(userData.address.shipping.city){
@@ -239,7 +240,7 @@ let updateUser = async function (req, res){
         }
         if(userData.address.billing) {
             if(userData.address.billing.street){
-                if(!streetRegex.test(userData.address.billing.street)) return res.status(400).send({status:false, message:"billing street name is required and string formet"})
+                if(!streetRegex.test(userData.address.billing.street)) return res.status(400).send({status:false, message:"billing street name is required and addObjing formet"})
                 checkUser.address.billing.street = userData.address.billing.street
             }
             if(userData.address.billing.city){
