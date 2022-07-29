@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const{newProduct,getAllProduct,getSingleProduct,deleteProduct}=require("../controllers/productController")
 
 const { authentication ,authorisation} = require("../Auth/userAuth");
 const {registerUser,login, getProfile,updateUser} = require('../controllers/userController')
+const{newProduct,getAllProduct,getSingleProduct,deleteProduct}=require("../controllers/productController")
 
 
 /* USER API's */
