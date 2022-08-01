@@ -116,7 +116,7 @@ const getSingleProduct = async (req,res)=>{
 
         if(!data || data.isDeleted === true) return res.status(404).send({status:false, message: "product not found  😒"})
 
-        return res.status(200).send({status:false, message: "product detail's ",data})
+        return res.status(200).send({status:true, message: "product detail's ",data})
 
     }catch(err){return res.status(500).send({ status: false, message: err.message });}
 }
