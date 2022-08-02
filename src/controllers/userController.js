@@ -217,44 +217,41 @@ let updateUser = async function (req, res){
             checkUser.profileImage = profileImage;
         
         }
-        if(userData.password) {
-            if (!isValid(userData.password)) return res.status(400).send({status: false, message: "password of user not present."})
-            checkUser.password = await bcrypt.hash(userData.password , 10) 
-        }
+    if(userData.password) {
+    if (!isValid(userData.password)) return res.status(400).send({status: false, message: "password of user not present."})
+    checkUser.password = await bcrypt.hash(userData.password , 10) 
+    }
 
-        userData.address = JSON.parse(userData.address); 
+    userData.address = JSON.parse(userData.address); 
 
-        if(userData.address.shipping) {
-            if(userData.address.shipping.street){
-                if(!streetRegex.test(userData.address.shipping.street)) return res.status(400).send({status:false, message:"shipping's street name is required and addObjing formet"})
-                checkUser.address.shipping.street = userData.address.shipping.street
-            }
-            if(userData.address.shipping.city){
-                if(!cityRegex.test(userData.address.shipping.city)) return res.status(400).send({status:false, message:"shipping's city name is required "})
-                checkUser.address.shipping.city = userData.address.shipping.city
-            }
-            if(userData.address.shipping.pincode){
-                if(!pinRegex.test(userData.address.shipping.pincode)) return res.status(400).send({status:false, message:"shipping's pincode is required and only 6 digit in number and makesure not start with 0 "})
-                checkUser.address.shipping.pincode = userData.address.shipping.pincode
-            }
-        }
-        if(userData.address.billing) {
-            if(userData.address.billing.street){
-                if(!streetRegex.test(userData.address.billing.street)) return res.status(400).send({status:false, message:"billing street name is required and addObjing formet"})
-                checkUser.address.billing.street = userData.address.billing.street
-            }
-            if(userData.address.billing.city){
-                if(!cityRegex.test(userData.address.billing.city)) return res.status(400).send({status:false, message:"billing city name is required"})
-                checkUser.address.billing.city = userData.address.billing.city
-            }
-            if(userData.address.billing.pincode){
-                if(!pinRegex.test(userData.address.billing.pincode)) return res.status(400).send({status:false, message:"billing pincode  is required and only 6 digit in number and makesure not start with 0"})
-                checkUser.address.billing.pincode = userData.address.billing.pincode
-            }
-        
-        }
-        const data = await checkUser.save();
-        return res.status(200).send({status:true, message: "User profile updated", data})
+    if(userData.address.shipping) {
+    if(userData.address.shipping.street){
+    if(!streetRegex.test(userData.address.shipping.street)) return res.status(400).send({status:false, message:"shipping's street name is required and addObjing formet"})
+    checkUser.address.shipping.street = userData.address.shipping.street
+    }
+    if(userData.address.shipping.city){
+    if(!cityRegex.test(userData.address.shipping.city)) return res.status(400).send({status:false, message:"shipping's city name is required "})
+    checkUser.address.shipping.city = userData.address.shipping.city
+    }
+    if(userData.address.shipping.pincode){
+    if(!pinRegex.test(userData.address.shipping.pincode)) return res.status(400).send({status:false, message:"shipping's pincode is required and only 6 digit in number and makesure not start with 0 "})
+    checkUser.address.shipping.pincode = userData.address.shipping.pincode
+    }}
+    if(userData.address.billing) {
+    if(userData.address.billing.street){
+    if(!streetRegex.test(userData.address.billing.street)) return res.status(400).send({status:false, message:"billing street name is required and addObjing formet"})
+    checkUser.address.billing.street = userData.address.billing.street
+    }
+    if(userData.address.billing.city){
+    if(!cityRegex.test(userData.address.billing.city)) return res.status(400).send({status:false, message:"billing city name is required"})
+    checkUser.address.billing.city = userData.address.billing.city
+    }
+    if(userData.address.billing.pincode){
+    if(!pinRegex.test(userData.address.billing.pincode)) return res.status(400).send({status:false, message:"billing pincode  is required and only 6 digit in number and makesure not start with 0"})
+    checkUser.address.billing.pincode = userData.address.billing.pincode
+    }}
+    const data = await checkUser.save();
+    return res.status(200).send({status:true, message: "User profile updated", data})
     }catch(err) {return res.status(500).send({status:false, message: err.message})}
     
 }
