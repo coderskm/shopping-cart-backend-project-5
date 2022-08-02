@@ -4,7 +4,7 @@ const router = express.Router();
 const { authentication ,authorisation} = require("../Auth/userAuth");
 const {registerUser,login, getProfile,updateUser} = require('../controllers/userController')
 const{newProduct,getAllProduct,getSingleProduct,updateProduct,deleteProduct}=require("../controllers/productController")
-const{cartCreation, getCart}=require('../controllers/cartController')
+const{cartCreation, getCart, updateCart, deleteCart}=require('../controllers/cartController')
 
 
 /* USER API's */
@@ -23,6 +23,8 @@ router.delete("/products/:productId", deleteProduct);
 /* CART APIs */
 router.post( "/users/:userId/cart", cartCreation); 
 router.get('/users/:userId/cart',getCart)
+router.put('/users/:userId/cart', updateCart)
+router.delete('/users/:userId/cart',deleteCart)
 
 /*BAD URL */
 router.all("*", function (req, res) {
