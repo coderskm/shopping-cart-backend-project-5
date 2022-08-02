@@ -1,5 +1,5 @@
 const cartModel = require('../models/cartModel');
-const { isValidBody, isValid, isValidPassword, isValidFiles } = require('../validators/validator');
+const { isValidBody, isValid, isValidPassword } = require('../validators/validator');
 const { default: mongoose } = require('mongoose');
 const productModel = require('../models/productModel');
 const userModel=require('../models/userModel')
@@ -81,66 +81,130 @@ const getCart=async function(req,res){
 
 const updateCart = async function (req, res) {
     try {
-        const userId = req.params.userId;
-        const requestBody = req.body
-        const { cartId, productId, removeProduct } = requestBody;
+      const userId = req.params.userId;
+      const requestBody = req.body;
+      const { cartId, productId, removeProduct } = requestBody;
 
-        if (!mongoose.isValidObjectId(userId)) {
-        return res.status(400).send({ status: false, message: "userId not valid" });
-        }
-        
+      if (!mongoose.isValidObjectId(userId)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "userId not valid" });
+      }
 
-        if(!isValidBody(requestBody)){
-            return res.status(400).send({status:false, message:"no data found to update"})
-        }
-        if (!mongoose.isValidObjectId(cartId)) {
-            return res.status(400).send({ status: false, message: "cartId not valid" });
-        }
-        if (!mongoose.isValidObjectId(productId)) {
-             return res.status(400).send({ status: false, message: "productId not valid" });
-        }
-        
-        // if (removeProduct != 0 || removeProduct != 1) {
-        //     return res.status(400).send({status:false, message:"removeProduct value should be 0 or 1"})
-        // }
-        const checkUser = await userModel.findOne({ _id: userId })
-        if (!checkUser) {
-            return res.status(404).send({status:false, message:"user with given userId does not exist"})
-        }
-        const checkCart = await cartModel.findOne({ _id: cartId })
-        if (!checkCart) {
-            return res.status(404).send({status:false, message:"Cart with given cartId does not exist"})
-        }
-        const checkProduct = await productModel.findOne({ _id: productId, isDeleted:false })
-        if (!checkProduct) {
-            return res.status(404).send({status:false, message:"product with given productId does not exist"})
-        }
+      if (!isValidBody(requestBody)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "no data found to update" });
+      }
+      if (!mongoose.isValidObjectId(cartId)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "cartId not valid" });
+      }
+      if (!mongoose.isValidObjectId(productId)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "productId not valid" });
+      }
+      //!/^(1|0)$/.test(removeProduct)
+      // if (removeProduct != 0 || removeProduct != 1) {
+      //     return res.status(400).send({status:false, message:"removeProduct value should be 0 or 1"})
+      // }
+      const checkUser = await userModel.findOne({ _id: userId });
+      if (!checkUser) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "user with given userId does not exist",
+          });
+      }
+      const checkCart = await cartModel.findOne({ _id: cartId });
+      if (!checkCart) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "Cart with given cartId does not exist",
+          });
+      }
+      const checkProduct = await productModel.findOne({
+        _id: productId,
+        isDeleted: false,
+      });
+      if (!checkProduct) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "product with given productId does not exist",
+          });
+      }
 
-        // 0 to remove product 
-        // 1 to decrease quantity
-        let cartArray = checkCart.items;
-        for (let i = 0; i < cartArray.length; i++){
-            if (cartArray[i].productId == productId) {
-                let Price = cartArray[i].quantity * checkProduct.price;
-                if (removeProduct == 0) {
-                    const updatedCartItem = await cartModel.findOneAndUpdate({ _id: cartId }, { $pull: { items: { productId: productId } }, totalPrice: checkCart.totalPrice - Price, totalItems: checkCart.totalItems - 1 }, { new: true })
-                    
-                    return res.status(200).send({status:true,message:"removed product",data:updatedCartItem })
-                }
-                if (removeProduct == 1) {
-                    if (cartArray[i].quantity == 1 && removeProduct == 1) {
-                        const updateCartQuantity = await cartModel.findOneAndUpdate({ _id: cartId }, { $pull: { items: { productId: productId } }, totalPrice: checkCart.totalPrice - Price, totalItems: checkCart.totalItems - 1 }, { new: true })
-                    
-                        return res.status(200).send({ status: true, message: "removed product", data: updateCartQuantity })
-                    }
-                    cartArray[i].quantity = cartArray[i].quantity - 1;
-                    const updateCart = await cartModel.findOneAndUpdate({ _id: cartId }, { items: cartArray, totalPrice: checkCart.totalPrice - checkProduct.price }, { new: true });
-                    return res.status(200).send({status:true, message:"decreased quantity", data:updateCart})
-                }
+      // 0 to remove product
+      // 1 to decrease quantity
+      let cartArray = checkCart.items; // accessing array of product "items" from cart collection
+      for (let i = 0; i < cartArray.length; i++) {
+        if (cartArray[i].productId == productId) { // checking whether product of specified productId exist or not in given items in cart
+          let Price = cartArray[i].quantity * checkProduct.price; // total price of item which we want to delete
+          if (removeProduct == 0) {
+            const updatedCartItem = await cartModel.findOneAndUpdate(
+              { _id: cartId },
+              {
+                $pull: { items: { productId: productId } }, // pull to remove product which we want to delete 
+                totalPrice: checkCart.totalPrice - Price, // updating total price by removing price of deleted product from total price of all products
+                totalItems: checkCart.totalItems - 1, // as we delete product, total count of items will also decrease by 1 at a time.
+              },
+              { new: true }
+            );
+
+            return res
+              .status(200)
+              .send({
+                status: true,
+                message: "removed product",
+                data: updatedCartItem,
+              });
+          }
+          if (removeProduct == 1) {
+            if (cartArray[i].quantity == 1 && removeProduct == 1) { // removing product if its total count becomes 0 after deleting it.
+              const updateCartQuantity = await cartModel.findOneAndUpdate(
+                { _id: cartId },
+                {
+                  $pull: { items: { productId: productId } },
+                  totalPrice: checkCart.totalPrice - Price,
+                  totalItems: checkCart.totalItems - 1,
+                },
+                { new: true }
+              );
+
+              return res
+                .status(200)
+                .send({
+                  status: true,
+                  message: "removed product",
+                  data: updateCartQuantity,
+                });
             }
-            
+            cartArray[i].quantity = cartArray[i].quantity - 1; // decreasing the quantity of product by 1 at a time 
+            const updateCart = await cartModel.findOneAndUpdate(
+              { _id: cartId },
+              {
+                items: cartArray,
+                totalPrice: checkCart.totalPrice - checkProduct.price, // updating total price by decreasing total price by item's price whose quantity we reduced.
+              },
+              { new: true }
+            );
+            return res
+              .status(200)
+              .send({
+                status: true,
+                message: "decreased quantity",
+                data: updateCart,
+              });
+          }
         }
-
+      }
     } catch (err) {
         res.status(500).send({status:false, message:err.message})
     }
@@ -163,7 +227,7 @@ const deleteCart = async (req, res) => {
         }
     
         const deleteCart = await cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 }, { new: true });
-        return res.status(500).send({ status: false, message: "cart is deleted", data: deleteCart })
+        return res.status(500).send({ status: false, message: "cart is deleted" })
         
     } catch (err) {
         res.status(500).send({status:false, message:err.message})
