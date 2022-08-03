@@ -25,7 +25,13 @@ const cartCreation= async function(req,res){
         console.log(cartCheck)
         const productCheck=await productModel.findOne({_id:productId, isDeleted:false})  
         console.log(productCheck)
-        if(!productCheck){return res.status(404).send({status:false,message:"the product doesnt exist or is deleted"})}
+      if (!productCheck) { return res.status(404).send({ status: false, message: "the product doesnt exist or is deleted" }) }
+      if (cartId) {
+        if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({status:false, message: " Invalid cartId format"})
+        
+      }
+      if (cartCheck && !cartId) return res.status(400).send({ status: false, message: "Enter your respective cart ID " })
+      
         
         if(!cartCheck){
         let cartItems={}
@@ -52,10 +58,9 @@ const cartCreation= async function(req,res){
         // totalPrice:getCart.totalPrice + productCheck.price*quantity
         // const SameProduct=await cartModel.findOneAndUpdate({_id:cartId,productId},{},{new:true})
 
-        // if(cartCheck && cartId  )return res.status(400).send({status:false, message: "Enter your cart ID "})
 
         if(!mongoose.isValidObjectId(cartId)) return res.status(400).send({status:false, message: " Invalid cartId format"})
-
+        
         const oldCart=await cartModel.findOneAndUpdate({_id:cartId},{$push:{items:{productId,quantity}},totalPrice:cartCheck.totalPrice+productCheck.price*quantity,totalItems:cartCheck.items.length+1},{new:true})
         return res.status(201).send({status:true, data:oldCart})
         
