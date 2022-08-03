@@ -21,10 +21,10 @@ router.put("/products/:productId", updateProduct);
 router.delete("/products/:productId", deleteProduct);
 
 /* CART APIs */
-router.post( "/users/:userId/cart", cartCreation); 
-router.get('/users/:userId/cart',getCart)
-router.put('/users/:userId/cart', updateCart)
-router.delete('/users/:userId/cart',deleteCart)
+router.post( "/users/:userId/cart",authentication,authorisation, cartCreation); 
+router.get("/users/:userId/cart", authentication, authorisation, getCart);
+router.put("/users/:userId/cart", authentication, authorisation, updateCart);
+router.delete("/users/:userId/cart", authentication, authorisation, deleteCart);
 
 /*BAD URL */
 router.all("*", function (req, res) {
