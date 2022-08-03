@@ -5,6 +5,7 @@ const { authentication ,authorisation} = require("../Auth/userAuth");
 const {registerUser,login, getProfile,updateUser} = require('../controllers/userController')
 const{newProduct,getAllProduct,getSingleProduct,updateProduct,deleteProduct}=require("../controllers/productController")
 const{cartCreation, getCart, updateCart, deleteCart}=require('../controllers/cartController')
+const {placeOrder}=require('../controllers/orderControler')
 
 
 /* USER API's */
@@ -25,6 +26,9 @@ router.post( "/users/:userId/cart",authentication,authorisation, cartCreation);
 router.get("/users/:userId/cart", authentication, authorisation, getCart);
 router.put("/users/:userId/cart", authentication, authorisation, updateCart);
 router.delete("/users/:userId/cart", authentication, authorisation, deleteCart);
+
+/*ORDER APIs */
+router.post("/users/:userId/orders",placeOrder)
 
 /*BAD URL */
 router.all("*", function (req, res) {
