@@ -225,9 +225,10 @@ const deleteCart = async (req, res) => {
         if (!checkCart) {
             return res.status(404).send({ status: false, message: "Cart with given userId does not exist" })
         }
-    
+      
+        
         const deleteCart = await cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 }, { new: true });
-        return res.status(500).send({ status: false, message: "cart is deleted" })
+        return res.status(200).send({ status: false, message: "cart is deleted" })
         
     } catch (err) {
         res.status(500).send({status:false, message:err.message})
