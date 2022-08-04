@@ -32,7 +32,8 @@ const cartCreation = async function (req, res) {
       cartItems.items = { productId, quantity }
       cartItems.totalPrice = productCheck.price * quantity;
       cartItems.totalItems = 1
-      const newCart = (await cartModel.create(cartItems)).populate({ path: "items.productId" })
+      let newCart = await (await cartModel.create(cartItems)).populate({ path: "items.productId" })
+      
       return res.status(201).send({ status: true, data: newCart })
     } else {
       if (!cartId) return res.status(400).send({ status: false, message: "Enter your respective cart ID " })
@@ -85,44 +86,54 @@ const updateCart = async function (req, res) {
         .send({ status: false, message: "userId not valid" });
     }
 
-    if (!isValidBody(requestBody)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "no data found to update" });
-    }
-    if (!mongoose.isValidObjectId(cartId)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "cartId not valid" });
-    }
-    if (!mongoose.isValidObjectId(productId)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "productId not valid" });
-    }
-    //!/^(1|0)$/.test(removeProduct)
-    // if (removeProduct != 0 || removeProduct != 1) {
-    //     return res.status(400).send({status:false, message:"removeProduct value should be 0 or 1"})
-    // }
-    const checkUser = await userModel.findOne({ _id: userId });
-    if (!checkUser) {
-      return res.status(404).send({status: false,message: "user with given userId does not exist",});
-    }
-    const checkCart = await cartModel.findOne({ _id: cartId });
-    if (!checkCart) {return res.status(404).send({status: false,message: "Cart with given cartId does not exist",});
-    }
-    const checkProduct = await productModel.findOne({
-      _id: productId,
-      isDeleted: false,
-    });
-    if (!checkProduct) {
-      return res
-        .status(404)
-        .send({
-          status: false,
-          message: "product with given productId does not exist",
-        });
-    }
+      if (!Object.keys(requestBody).length===0) {
+        return res
+          .status(400)
+          .send({ status: false, message: "no data found to update" });
+      }
+      if (!mongoose.isValidObjectId(cartId)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "cartId not valid" });
+      }
+      if (!mongoose.isValidObjectId(productId)) {
+        return res
+          .status(400)
+          .send({ status: false, message: "productId not valid" });
+      }
+      if (!/^(1|0)$/.test(removeProduct)) {
+          return res.status(400).send({status:false, message:"removeProduct value should be 0 or 1"})
+      }
+      const checkUser = await userModel.findOne({ _id: userId });
+      if (!checkUser) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "user with given userId does not exist",
+          });
+      }
+      const checkCart = await cartModel.findOne({ _id: cartId });
+      if (!checkCart) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "Cart with given cartId does not exist",
+          });
+      }
+      const checkProduct = await productModel.findOne({
+        _id: productId,
+        isDeleted: false,
+      });
+      if (!checkProduct) {
+        return res
+          .status(404)
+          .send({
+            status: false,
+            message: "product with given productId does not exist",
+          });
+      }
 
     // 0 to remove product
     // 1 to decrease quantity
@@ -209,6 +220,9 @@ const deleteCart = async (req, res) => {
       return res.status(404).send({ status: false, message: "Cart with given userId does not exist" })
     }
 
+    if (checkCart.items.length === 0 && checkCart.totalItems === 0 && checkCart.totalPrice === 0) {
+      return res.status(400).send({status:false, message:"cart is already deleted."})
+    }
 
     const deleteCart = await cartModel.findOneAndUpdate({ userId: userId }, { items: [], totalPrice: 0, totalItems: 0 }, { new: true });
     return res.status(200).send({ status: false, message: "cart is deleted" })

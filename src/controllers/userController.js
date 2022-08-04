@@ -23,23 +23,35 @@ const registerUser = async(req, res) =>{
         }
         const { fname, lname, email, phone, password, address } = userData;
         
-        if (!isValid(fname) && !fname.match(nameRegex)) {
-           return res.status(400).send({ status: false, message: "First Name of user not present or not legit. Should contain only alphabets" });
+        if (!isValid(fname)) {
+           return res.status(400).send({ status: false, message: "First Name of user not present" });
 
         }
-        if (!isValid(lname)&&!lname.match(nameRegex)) {
-            return res.status(400).send({ status: false, message: "Last Name of user not present or not legit. Should contain only alphabets" });
+        if (!nameRegex.test(fname)) {
+            return res.status(400).send({status:false, message:"First name should contain only alphabets."})
         }
-        if (!isValid(email)&&!email.match(emailRegex)) {
+        if (!isValid(lname)) {
+            return res.status(400).send({ status: false, message: "Last Name of user not present" });
+        }
+        if (!nameRegex.test(lname)) {
+            return res.status(400).send({status:false, message:"last name should contain only alphabets."})
+        }
+        if (!isValid(email)) {
             return res.status(400).send({status: false, message: "Email of user not present"})
+        }
+        if (!emailRegex.test(email)) {
+            return res.status(400).send({status:false, message:"email not legit. Please try another"})
         }
         let uniqueEmail = await userModel.findOne({ email: email });
         if (uniqueEmail) {
             return res.status(400).send({status:false, message:"email already in use. Please try another"})
         }
              
-        if (!isValid(phone) && !phone.match(phoneRegex)) {
-            return res.status(400).send({status: false, message: "Phone number of user not present or not legit. Shold contain only digits"})
+        if (!isValid(phone)) {
+            return res.status(400).send({status: false, message: "Phone number of user not present."})
+        }
+        if (!phoneRegex.test(phone)) {
+            return res.status(400).send({status:false, message:"Phone number should be of 10 digits."})
         }
         let uniquePhone = await userModel.findOne({ phone: phone });
         if (uniquePhone) {
@@ -60,7 +72,9 @@ const registerUser = async(req, res) =>{
        } 
 
         let str = JSON.parse(JSON.stringify(address))
+        console.log(str)
         let addObj = JSON.parse(str)
+        console.log(addObj)
 
         if (typeof addObj == 'object' && Object.keys(addObj).length===2) {
             if (typeof addObj.shipping == 'object' && Object.keys(addObj.shipping).length === 3) {
