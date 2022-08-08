@@ -28,8 +28,8 @@ router.put("/users/:userId/cart", authentication, authorisation, updateCart);
 router.delete("/users/:userId/cart", authentication, authorisation, deleteCart);
 
 /*ORDER APIs */
-router.post("/users/:userId/orders", placeOrder)
-router.put("/users/:userId/orders", updateOrder)
+router.post("/users/:userId/orders",authentication, authorisation, placeOrder)
+router.put("/users/:userId/orders",authentication, authorisation, updateOrder)
 
 /*BAD URL */
 router.all("*", function (req, res) {
