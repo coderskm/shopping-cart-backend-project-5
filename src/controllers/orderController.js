@@ -54,7 +54,7 @@ const updateOrder=async function(req,res){
        const checkOder=await orderModel.findOne({_id:orderId,userId:userId})
        if(!checkOder){return  res.status(404).send({status:false,message:"Order does not belong to user or order doesn't exist"})}
 
-    // if(checkOder.cancellable == false) {return res.status(400).send({status:false, message:"this oder can't be cancled"})}
+       if(checkOder.cancellable == false) {return res.status(400).send({status:false, message:"this oder can't be cancled"})}
        if (!statusRegex.test(status)) {
                 return res.status(400).send({ status: false, message: "status should have 'pending', 'completed' or 'cancelled' as its value" })
             }

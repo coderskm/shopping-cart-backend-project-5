@@ -68,59 +68,38 @@ const updateCart = async function (req, res) {
     const requestBody = req.body;
     const { cartId, productId, removeProduct } = requestBody;
 
+    if(!cartId) return res.status(400).send({ status: false, message: "Enter cartId for updation.!!" });
+
     if (!mongoose.isValidObjectId(userId)) {
-      return res
-        .status(400)
-        .send({ status: false, message: "userId not valid" });
+      return res.status(400).send({ status: false, message: "userId not valid" });
     }
 
       if (!Object.keys(requestBody).length===0) {
-        return res
-          .status(400)
-          .send({ status: false, message: "no data found to update" });
+        return res.status(400).send({ status: false, message: "no data found to update" });
       }
       if (!mongoose.isValidObjectId(cartId)) {
-        return res
-          .status(400)
-          .send({ status: false, message: "cartId not valid" });
+        return res.status(400).send({ status: false, message: "cartId not valid" });
       }
       if (!mongoose.isValidObjectId(productId)) {
-        return res
-          .status(400)
-          .send({ status: false, message: "productId not valid" });
+        return res.status(400).send({ status: false, message: "productId not valid" });
       }
       if (!/^(1|0)$/.test(removeProduct)) {
           return res.status(400).send({status:false, message:"removeProduct value should be 0 or 1"})
       }
       const checkUser = await userModel.findOne({ _id: userId });
       if (!checkUser) {
-        return res
-          .status(404)
-          .send({
-            status: false,
-            message: "user with given userId does not exist",
-          });
+        return res.status(404).send({status: false,message: "user with given userId does not exist",});
       }
       const checkCart = await cartModel.findOne({ _id: cartId, userId:userId });
       if (!checkCart) {
-        return res
-          .status(400)
-          .send({
-            status: false,
-            message: "CartId does not belong to user",
-          });
+        return res.status(400).send({status: false,message: "CartId does not belong to user",});
       }
       const checkProduct = await productModel.findOne({
         _id: productId,
         isDeleted: false,
       });
       if (!checkProduct) {
-        return res
-          .status(404)
-          .send({
-            status: false,
-            message: "product with given productId is deleted",
-          });
+        return res.status(404).send({status: false,message: "product with given productId is deleted",});
       }
 
     const checkCartProduct = await cartModel.findOne({ _id: cartId, "items.productId": productId })
@@ -146,12 +125,7 @@ const updateCart = async function (req, res) {
             { new: true }
           );
 
-          return res
-            .status(200)
-            .send({
-              status: true,
-              message: "removed product",
-              data: updatedCartItem,
+          return res.status(200).send({status: true,message: "removed product",data: updatedCartItem,
             });
         }
         if (removeProduct == 1) {

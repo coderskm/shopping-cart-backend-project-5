@@ -28,7 +28,6 @@ const authentication = async function (req, res, next) {
 const authorisation = async function (req, res, next) {
 
     try {
-
         if(!mongoose.isValidObjectId(req.params.userId)) return res.status(400).send({ status: false, message : "please enter valid id" })
       
         if (req.userDetails._id != req.params.userId) {
